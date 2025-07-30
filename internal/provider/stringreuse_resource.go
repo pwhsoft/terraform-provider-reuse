@@ -5,8 +5,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -39,7 +37,7 @@ type StringReuseResourceModel struct {
 }
 
 func (r *StringReuseResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_reuse"
+	resp.TypeName = req.ProviderTypeName + "_string"
 }
 
 func (r *StringReuseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -78,18 +76,6 @@ func (r *StringReuseResource) Configure(_ context.Context, req resource.Configur
 	if req.ProviderData == nil {
 		return
 	}
-
-	client, ok := req.ProviderData.(*http.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-
-		return
-	}
-
-	r.client = client
 }
 
 func (r *StringReuseResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

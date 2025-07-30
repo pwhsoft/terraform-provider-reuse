@@ -1,5 +1,5 @@
 # Copyright (c) HashiCorp, Inc.
 
-provider "reuse_value" {
+provider "reusevalue" {
   # example configuration here
 }

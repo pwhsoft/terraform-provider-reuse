@@ -31,7 +31,7 @@ type ReuseValueProviderModel struct {
 }
 
 func (p *ReuseValueProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "reuse"
+	resp.TypeName = "reusevalue"
 	resp.Version = p.version
 }
 

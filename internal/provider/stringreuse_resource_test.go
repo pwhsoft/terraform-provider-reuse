@@ -19,13 +19,13 @@ func TestAccStringReuseResource(t *testing.T) {
 			// Create und Read Testing - Setter setzt den Wert
 			{
 				Config: `
-resource "reuse_reuse" "test" {
+resource "reusevalue_string" "test" {
     set_if_not_null_or_empty = "initial"
 }
 `,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"reuse_reuse.test",
+						"reusevalue_string.test",
 						tfjsonpath.New("value"),
 						knownvalue.StringExact("initial"),
 					),
@@ -34,13 +34,13 @@ resource "reuse_reuse" "test" {
 			// Update und Read Testing - Setter ändert den Wert
 			{
 				Config: `
-resource "reuse_reuse" "test" {
+resource "reusevalue_string" "test" {
     set_if_not_null_or_empty = "updated"
 }
 `,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"reuse_reuse.test",
+						"reusevalue_string.test",
 						tfjsonpath.New("value"),
 						knownvalue.StringExact("updated"),
 					),
@@ -49,12 +49,12 @@ resource "reuse_reuse" "test" {
 			// Test: Wert bleibt erhalten wenn Setter weggelassen wird
 			{
 				Config: `
-resource "reuse_reuse" "test" {
+resource "reusevalue_string" "test" {
 }
 `,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"reuse_reuse.test",
+						"reusevalue_string.test",
 						tfjsonpath.New("value"),
 						knownvalue.StringExact("updated"),
 					),

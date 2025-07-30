@@ -1,5 +1,7 @@
 # Copyright (c) HashiCorp, Inc.
 
-resource "scaffolding_example" "example" {
-  configurable_attribute = "some-value"
+resource "reusevalue_string" "example" {
+  set_if_not_null_or_empty = "some-value"
 }
+
+# later access using reuse_value.value
