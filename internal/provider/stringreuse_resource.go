@@ -119,14 +119,31 @@ func (r *StringReuseResource) Create(ctx context.Context, req resource.CreateReq
 func (r *StringReuseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StringReuseResourceModel
 
-	// Read Terraform prior state data into the model
+	// State-Daten ins Model laden
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Save updated data into Terraform state
+	// Wert aus Backend/API abrufen
+	// Beispiel:
+	// currentValue, err := r.client.GetValue(ctx, data.ID.ValueString())
+	// if err != nil {
+	//     if isNotFoundError(err) {
+	//         resp.State.RemoveResource(ctx)
+	//         return
+	//     }
+	//     resp.Diagnostics.AddError("Lesefehler", err.Error())
+	//     return
+	// }
+
+	// Aktuellen Wert setzen
+	// data.Value = types.StringValue(currentValue)
+
+	// Setter ist immer null im State
+	data.SetIfNotNullOrEmpty = types.StringNull()
+
+	// Aktualisierten State speichern
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
