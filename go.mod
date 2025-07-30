@@ -1,4 +1,4 @@
-module tfc-string_reuse
+module reuse_value
 
 go 1.23.7
 

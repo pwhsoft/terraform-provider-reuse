@@ -20,37 +20,37 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &ExampleResource{}
-var _ resource.ResourceWithImportState = &ExampleResource{}
+var _ resource.Resource = &StringReuseResource{}
+var _ resource.ResourceWithImportState = &StringReuseResource{}
 
-func NewExampleResource() resource.Resource {
-	return &ExampleResource{}
+func NewStringReuseResource() resource.Resource {
+	return &StringReuseResource{}
 }
 
-// ExampleResource defines the resource implementation.
-type ExampleResource struct {
+// StringReuseResource defines the resource implementation.
+type StringReuseResource struct {
 	client *http.Client
 }
 
-// ExampleResourceModel describes the resource data model.
-type ExampleResourceModel struct {
+// StringReuseResourceModel describes the resource data model.
+type StringReuseResourceModel struct {
 	ID                  types.String `tfsdk:"id"`
 	SetIfNotNullOrEmpty types.String `tfsdk:"set_if_not_null_or_empty"` // Setter (input, write-only)
 	Value               types.String `tfsdk:"value"`                    // Getter (computed, read-only)
 }
 
-func (r *ExampleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_example"
+func (r *StringReuseResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_reuse"
 }
 
-func (r *ExampleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *StringReuseResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Example resource mit write-only Setter und read-only Getter.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Example identifier",
+				MarkdownDescription: "Identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -74,7 +74,7 @@ func (r *ExampleResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 }
 
-func (r *ExampleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *StringReuseResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -93,8 +93,8 @@ func (r *ExampleResource) Configure(ctx context.Context, req resource.ConfigureR
 	r.client = client
 }
 
-func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data ExampleResourceModel
+func (r *StringReuseResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data StringReuseResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -116,8 +116,8 @@ func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ExampleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data ExampleResourceModel
+func (r *StringReuseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data StringReuseResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -130,24 +130,41 @@ func (r *ExampleResource) Read(ctx context.Context, req resource.ReadRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ExampleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data ExampleResourceModel
+func (r *StringReuseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data StringReuseResourceModel
 
-	// Read Terraform plan data into the model
+	// Plan-Daten ins Model laden
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Prüfen ob neuer Wert gesetzt werden soll
+	if !data.SetIfNotNullOrEmpty.IsNull() && !data.SetIfNotNullOrEmpty.IsUnknown() {
+		newValue := strings.TrimSpace(data.SetIfNotNullOrEmpty.ValueString())
+		if newValue != "" {
+			// Hier könnte der API/Datenbank-Aufruf erfolgen
+			// Beispiel:
+			// updatedValue, err := r.client.UpdateValue(ctx, data.ID.ValueString(), newValue)
+			// if err != nil {
+			//     resp.Diagnostics.AddError("Update fehlgeschlagen", err.Error())
+			//     return
+			// }
+
+			// Neuen Wert setzen
+			data.Value = types.StringValue(newValue)
+		}
+	}
+
 	// write-only: Setter wieder nullen
 	data.SetIfNotNullOrEmpty = types.StringNull()
 
-	// Save updated data into Terraform state
+	// Aktualisierten State speichern
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *ExampleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data ExampleResourceModel
+func (r *StringReuseResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data StringReuseResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -156,7 +173,7 @@ func (r *ExampleResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
-func (r *ExampleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *StringReuseResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
