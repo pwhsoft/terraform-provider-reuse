@@ -106,7 +106,7 @@ func (r *StringReuseResource) Create(ctx context.Context, req resource.CreateReq
 	data.ID = types.StringValue(time.Now().UTC().Format(time.RFC3339Nano))
 
 	// write-only: Setter nach Apply entfernen
-	data.SetIfNotNullOrEmpty = types.StringNull()
+	//data.SetIfNotNullOrEmpty = types.StringNull()
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -141,7 +141,7 @@ func (r *StringReuseResource) Read(ctx context.Context, req resource.ReadRequest
 	// data.Value = types.StringValue(currentValue)
 
 	// Setter ist immer null im State
-	data.SetIfNotNullOrEmpty = types.StringNull()
+	//data.SetIfNotNullOrEmpty = types.StringNull()
 
 	// Aktualisierten State speichern
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -174,7 +174,7 @@ func (r *StringReuseResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// write-only: Setter wieder nullen
-	data.SetIfNotNullOrEmpty = types.StringNull()
+	//data.SetIfNotNullOrEmpty = types.StringNull()
 
 	// Aktualisierten State speichern
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
