@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure ReuseValueProvider satisfies various provider interfaces.
@@ -29,7 +28,6 @@ type ReuseValueProvider struct {
 
 // ReuseValueProviderModel describes the provider data model.
 type ReuseValueProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
 }
 
 func (p *ReuseValueProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
