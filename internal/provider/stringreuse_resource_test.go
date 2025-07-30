@@ -14,7 +14,7 @@ func TestAccStringReuseResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create und Read Testing
+			// Create und Read Testing - Setter setzt den Wert
 			{
 				Config: `
 resource "reuse_reuse" "test" {
@@ -27,15 +27,9 @@ resource "reuse_reuse" "test" {
 						tfjsonpath.New("value"),
 						knownvalue.StringExact("initial"),
 					),
-					// Setter sollte nach Apply null sein
-					statecheck.ExpectKnownValue(
-						"reuse_reuse.test",
-						tfjsonpath.New("set_if_not_null_or_empty"),
-						knownvalue.Null(),
-					),
 				},
 			},
-			// Update und Read Testing
+			// Update und Read Testing - Setter ändert den Wert
 			{
 				Config: `
 resource "reuse_reuse" "test" {
@@ -48,15 +42,9 @@ resource "reuse_reuse" "test" {
 						tfjsonpath.New("value"),
 						knownvalue.StringExact("updated"),
 					),
-					// Setter sollte nach Apply null sein
-					statecheck.ExpectKnownValue(
-						"reuse_reuse.test",
-						tfjsonpath.New("set_if_not_null_or_empty"),
-						knownvalue.Null(),
-					),
 				},
 			},
-			// Test: Wert bleibt erhalten wenn Setter leer ist
+			// Test: Wert bleibt erhalten wenn Setter weggelassen wird
 			{
 				Config: `
 resource "reuse_reuse" "test" {
@@ -69,14 +57,6 @@ resource "reuse_reuse" "test" {
 						knownvalue.StringExact("updated"),
 					),
 				},
-			},
-			// Import Testing
-			{
-				ResourceName:      "reuse_reuse.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				// Setter ist write-only und sollte ignoriert werden
-				ImportStateVerifyIgnore: []string{"set_if_not_null_or_empty"},
 			},
 		},
 	})

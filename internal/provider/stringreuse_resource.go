@@ -39,11 +39,11 @@ type StringReuseResourceModel struct {
 	Value               types.String `tfsdk:"value"`                    // Getter (computed, read-only)
 }
 
-func (r *StringReuseResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *StringReuseResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_reuse"
 }
 
-func (r *StringReuseResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *StringReuseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Example resource mit write-only Setter und read-only Getter.",
 
