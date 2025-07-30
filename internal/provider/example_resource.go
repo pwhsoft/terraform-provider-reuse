@@ -7,12 +7,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -33,9 +33,9 @@ type ExampleResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type ExampleResourceModel struct {
-	ConfigurableAttribute types.String `tfsdk:"configurable_attribute"`
-	Defaulted             types.String `tfsdk:"defaulted"`
-	Id                    types.String `tfsdk:"id"`
+	ID                  types.String `tfsdk:"id"`
+	SetIfNotNullOrEmpty types.String `tfsdk:"set_if_not_null_or_empty"` // Setter (input)
+	Value               types.String `tfsdk:"value"`                    // Getter (computed)
 }
 
 func (r *ExampleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -48,22 +48,27 @@ func (r *ExampleResource) Schema(ctx context.Context, req resource.SchemaRequest
 		MarkdownDescription: "Example resource",
 
 		Attributes: map[string]schema.Attribute{
-			"configurable_attribute": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute",
-				Optional:            true,
-			},
-			"defaulted": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute with default value",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("example value when not configured"),
-			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Example identifier",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+
+			// SETTER: write-only, optionaler String
+			"set_if_not_null_or_empty": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Setter-Property: Wenn nicht null/leer, wird `value` auf diesen String gesetzt. Nach Apply wird dieses Feld im State auf null gesetzt.",
+			},
+
+			// GETTER: read-only Ergebnis
+			"value": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					valueFromSetterOrStateModifier{},
+				},
+				MarkdownDescription: "Getter-Property. Wird nur aus dem Setter gesetzt; sonst bleibt der State-Wert erhalten.",
 			},
 		},
 	}
@@ -109,7 +114,11 @@ func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
-	data.Id = types.StringValue("example-id")
+	// Dummy-ID
+	data.ID = types.StringValue(time.Now().UTC().Format(time.RFC3339Nano))
+
+	// write-only: Setter nach Apply entfernen
+	data.SetIfNotNullOrEmpty = types.StringNull()
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -158,6 +167,8 @@ func (r *ExampleResource) Update(ctx context.Context, req resource.UpdateRequest
 	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
 	//     return
 	// }
+	// write-only: Setter wieder nullen
+	data.SetIfNotNullOrEmpty = types.StringNull()
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
