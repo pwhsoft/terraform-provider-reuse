@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -34,8 +35,8 @@ type ExampleResource struct {
 // ExampleResourceModel describes the resource data model.
 type ExampleResourceModel struct {
 	ID                  types.String `tfsdk:"id"`
-	SetIfNotNullOrEmpty types.String `tfsdk:"set_if_not_null_or_empty"` // Setter (input)
-	Value               types.String `tfsdk:"value"`                    // Getter (computed)
+	SetIfNotNullOrEmpty types.String `tfsdk:"set_if_not_null_or_empty"` // Setter (input, write-only)
+	Value               types.String `tfsdk:"value"`                    // Getter (computed, read-only)
 }
 
 func (r *ExampleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -44,8 +45,7 @@ func (r *ExampleResource) Metadata(ctx context.Context, req resource.MetadataReq
 
 func (r *ExampleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Example resource",
+		MarkdownDescription: "Example resource mit write-only Setter und read-only Getter.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -81,7 +81,6 @@ func (r *ExampleResource) Configure(ctx context.Context, req resource.ConfigureR
 	}
 
 	client, ok := req.ProviderData.(*http.Client)
-
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -99,22 +98,11 @@ func (r *ExampleResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create example, got error: %s", err))
-	//     return
-	// }
-
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	// Dummy-ID
+	// Dummy-ID setzen
 	data.ID = types.StringValue(time.Now().UTC().Format(time.RFC3339Nano))
 
 	// write-only: Setter nach Apply entfernen
@@ -138,14 +126,6 @@ func (r *ExampleResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
-	//     return
-	// }
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -155,18 +135,10 @@ func (r *ExampleResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
-	//     return
-	// }
 	// write-only: Setter wieder nullen
 	data.SetIfNotNullOrEmpty = types.StringNull()
 
@@ -179,20 +151,62 @@ func (r *ExampleResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete example, got error: %s", err))
-	//     return
-	// }
 }
 
 func (r *ExampleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// -----------------------------------------------------------------------------
+// Plan-Modifier: `valueFromSetterOrStateModifier`
+// -----------------------------------------------------------------------------
+// Semantik:
+//   - Wenn `set_if_not_null_or_empty` (Config) NICHT null/unknown UND trim != "",
+//     dann wird `value` im Plan auf diesen String gesetzt.
+//   - Andernfalls wird `value` aus dem bisherigen State übernommen (falls vorhanden).
+//   - Bei Create ohne State und ohne Setter bleibt `value` unknown/null im Plan.
+//
+// -----------------------------------------------------------------------------
+type valueFromSetterOrStateModifier struct{}
+
+func (m valueFromSetterOrStateModifier) Description(_ context.Context) string {
+	return "Setzt `value` aus dem Setter, wenn dieser nicht leer ist; sonst übernimmt `value` den vorhandenen State-Wert."
+}
+
+func (m valueFromSetterOrStateModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m valueFromSetterOrStateModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// Früh beenden, falls bereits Fehler vorliegen
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Setter aus der Config lesen
+	var setter types.String
+	if diags := req.Config.GetAttribute(ctx, path.Root("set_if_not_null_or_empty"), &setter); diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	// Wenn der Setter bekannt und nicht leer ist, setze value auf den Setter-String
+	if !setter.IsNull() && !setter.IsUnknown() {
+		if s := strings.TrimSpace(setter.ValueString()); s != "" {
+			resp.PlanValue = types.StringValue(s)
+			return
+		}
+	}
+
+	// Ansonsten: State beibehalten, wenn vorhanden
+	if !req.StateValue.IsNull() && !req.StateValue.IsUnknown() {
+		resp.PlanValue = req.StateValue
+		return
+	}
+
+	// Kein State vorhanden (z. B. Create) und kein gültiger Setter:
+	// -> PlanValue bleibt unknown/null (Terraform behandelt das korrekt).
 }
