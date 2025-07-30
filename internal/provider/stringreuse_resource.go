@@ -29,7 +29,6 @@ func NewStringReuseResource() resource.Resource {
 
 // StringReuseResource defines the resource implementation.
 type StringReuseResource struct {
-	client *http.Client
 }
 
 // StringReuseResourceModel describes the resource data model.
