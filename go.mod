@@ -1,4 +1,4 @@
-module terraform-provider-reuse
+module github.com/pwhsoft/terraform-provider-reuse
 
 go 1.23.7
 
