@@ -18,16 +18,16 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &StringReuseResource{}
-var _ resource.ResourceWithImportState = &StringReuseResource{}
+var _ resource.Resource = &StringReuseResourceModel{}
+var _ resource.ResourceWithImportState = &StringReuseResourceModel{}
 
 func NewStringReuseResource() resource.Resource {
-	return &StringReuseResource{}
+	return &StringReuseResourceModel{}
 }
 
-// StringReuseResource defines the resource implementation.
-type StringReuseResource struct {
-}
+//// StringReuseResource defines the resource implementation.
+//type StringReuseResource struct {
+//}
 
 // StringReuseResourceModel describes the resource data model.
 type StringReuseResourceModel struct {
@@ -36,11 +36,11 @@ type StringReuseResourceModel struct {
 	Value               types.String `tfsdk:"value"`                    // Getter (computed, read-only)
 }
 
-func (r *StringReuseResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *StringReuseResourceModel) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_string"
 }
 
-func (r *StringReuseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *StringReuseResourceModel) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Example resource mit write-only Setter und read-only Getter.",
 
@@ -71,14 +71,14 @@ func (r *StringReuseResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
-func (r *StringReuseResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+func (r *StringReuseResourceModel) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
 	}
 }
 
-func (r *StringReuseResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *StringReuseResourceModel) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data StringReuseResourceModel
 
 	// Read Terraform plan data into the model
@@ -101,7 +101,7 @@ func (r *StringReuseResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *StringReuseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *StringReuseResourceModel) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StringReuseResourceModel
 
 	// State-Daten ins Model laden
@@ -132,7 +132,7 @@ func (r *StringReuseResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *StringReuseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *StringReuseResourceModel) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data StringReuseResourceModel
 
 	// Plan-Daten ins Model laden
@@ -165,7 +165,7 @@ func (r *StringReuseResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *StringReuseResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *StringReuseResourceModel) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data StringReuseResourceModel
 
 	// Read Terraform prior state data into the model
@@ -175,7 +175,7 @@ func (r *StringReuseResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *StringReuseResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *StringReuseResourceModel) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
