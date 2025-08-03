@@ -14,7 +14,7 @@ description: |-
 ```terraform
 # Copyright (c) HashiCorp, Inc.
 
-provider "reusevalue" {
+provider "reuse" {
   # example configuration here
 }
 ```
