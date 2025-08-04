@@ -19,7 +19,7 @@ func TestAccStringReuseResource(t *testing.T) {
 			// Create und Read Testing - Setter setzt den Wert
 			{
 				Config: `
-resource "reusevalue_string" "test" {
+resource "reuse_string" "test" {
     set_if_not_null_or_empty = "initial"
 }
 `,
@@ -34,7 +34,7 @@ resource "reusevalue_string" "test" {
 			// Update und Read Testing - Setter ändert den Wert
 			{
 				Config: `
-resource "reusevalue_string" "test" {
+resource "reuse_string" "test" {
     set_if_not_null_or_empty = "updated"
 }
 `,
@@ -49,7 +49,7 @@ resource "reusevalue_string" "test" {
 			// Test: Wert bleibt erhalten wenn Setter weggelassen wird
 			{
 				Config: `
-resource "reusevalue_string" "test" {
+resource "reuse_string" "test" {
 }
 `,
 				ConfigStateChecks: []statecheck.StateCheck{
